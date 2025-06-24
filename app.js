@@ -17,26 +17,39 @@ app.post('/ussd', (req, res) => {
     // English Flow
     else if (inputs[0] === '1') {
         if (inputs.length === 1) {
-            response = 'CON Enter your weight in KG:';
+            response = `CON Enter your weight in KG:
+0. Go back`;
         } else if (inputs.length === 2) {
-            response = 'CON Enter your height in CM:';
+            if (inputs[1] === '0') {
+                response = `CON Please choose language / Hitamo ururimi
+1. English
+2. Kinyarwanda`;
+            } else {
+                response = `CON Enter your height in CM:
+0. Go back`;
+            }
         } else if (inputs.length === 3) {
-            const weight = parseFloat(inputs[1]);
-            const height_cm = parseFloat(inputs[2]);
-            const height_m = height_cm / 100;
-            const bmi = weight / (height_m * height_m);
-            const bmiFormatted = bmi.toFixed(1);
+            if (inputs[2] === '0') {
+                response = `CON Enter your weight in KG:
+0. Go back`;
+            } else {
+                const weight = parseFloat(inputs[1]);
+                const height_cm = parseFloat(inputs[2]);
+                const height_m = height_cm / 100;
+                const bmi = weight / (height_m * height_m);
+                const bmiFormatted = bmi.toFixed(1);
 
-            let category = '';
-            if (bmi < 18.5) category = 'Underweight';
-            else if (bmi < 25) category = 'Normal weight';
-            else if (bmi < 30) category = 'Overweight';
-            else category = 'Obese';
+                let category = '';
+                if (bmi < 18.5) category = 'Underweight';
+                else if (bmi < 25) category = 'Normal weight';
+                else if (bmi < 30) category = 'Overweight';
+                else category = 'Obese';
 
-            response = `CON Your BMI is ${bmiFormatted} (${category}).
+                response = `CON Your BMI is ${bmiFormatted} (${category}).
 Do you want health tips?
 1. Yes
 2. No`;
+            }
         } else if (inputs.length === 4) {
             if (inputs[3] === '1') {
                 response = 'END Tip: Eat balanced meals and stay active daily!';
@@ -49,26 +62,39 @@ Do you want health tips?
     // Kinyarwanda Flow
     else if (inputs[0] === '2') {
         if (inputs.length === 1) {
-            response = 'CON Andika ibiro byawe (KG):';
+            response = `CON Andika ibiro byawe (KG):
+0. Subira inyuma`;
         } else if (inputs.length === 2) {
-            response = 'CON Andika uburebure bwawe (CM):';
+            if (inputs[1] === '0') {
+                response = `CON Please choose language / Hitamo ururimi
+1. English
+2. Kinyarwanda`;
+            } else {
+                response = `CON Andika uburebure bwawe (CM):
+0. Subira inyuma`;
+            }
         } else if (inputs.length === 3) {
-            const weight = parseFloat(inputs[1]);
-            const height_cm = parseFloat(inputs[2]);
-            const height_m = height_cm / 100;
-            const bmi = weight / (height_m * height_m);
-            const bmiFormatted = bmi.toFixed(1);
+            if (inputs[2] === '0') {
+                response = `CON Andika ibiro byawe (KG):
+0. Subira inyuma`;
+            } else {
+                const weight = parseFloat(inputs[1]);
+                const height_cm = parseFloat(inputs[2]);
+                const height_m = height_cm / 100;
+                const bmi = weight / (height_m * height_m);
+                const bmiFormatted = bmi.toFixed(1);
 
-            let category = '';
-            if (bmi < 18.5) category = 'Ufite ibiro bikeya';
-            else if (bmi < 25) category = 'Ibiro bisanzwe';
-            else if (bmi < 30) category = 'Ibiro byinshi';
-            else category = 'Ufite umubyibuho ukabije';
+                let category = '';
+                if (bmi < 18.5) category = 'Ufite ibiro bikeya';
+                else if (bmi < 25) category = 'Ibiro bisanzwe';
+                else if (bmi < 30) category = 'Ibiro byinshi';
+                else category = 'Ufite umubyibuho ukabije';
 
-            response = `CON BMI yawe ni ${bmiFormatted} (${category}).
+                response = `CON BMI yawe ni ${bmiFormatted} (${category}).
 Wifuza inama z’ubuzima?
 1. Yego
 2. Oya`;
+            }
         } else if (inputs.length === 4) {
             if (inputs[3] === '1') {
                 response = 'END Inama: Fata indyo yuzuye kandi ukore siporo buri munsi!';
