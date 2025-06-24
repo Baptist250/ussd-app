@@ -1,6 +1,13 @@
 const express = require('express');
+const { Pool } = require('pg');
 const app = express();
+
 app.use(express.urlencoded({ extended: true }));
+
+// PostgreSQL connection setup using provided URI
+const pool = new Pool({
+    connectionString: 'postgresql://bmi_owner:npg_Ib0gpieRF5Vv@ep-cool-moon-a8317le8-pooler.eastus2.azure.neon.tech/bmi?sslmode=require',
+});
 
 app.post('/ussd', (req, res) => {
     const { sessionId, serviceCode, phoneNumber, text } = req.body;
@@ -33,8 +40,17 @@ app.post('/ussd', (req, res) => {
                 response = `CON Enter your weight in KG:
 0. Go back`;
             } else {
+                response = `CON Enter your age:
+0. Go back`;
+            }
+        } else if (inputs.length === 4) {
+            if (inputs[3] === '0') {
+                response = `CON Enter your height in CM:
+0. Go back`;
+            } else {
                 const weight = parseFloat(inputs[1]);
                 const height_cm = parseFloat(inputs[2]);
+                const age = parseInt(inputs[3]);
                 const height_m = height_cm / 100;
                 const bmi = weight / (height_m * height_m);
                 const bmiFormatted = bmi.toFixed(1);
@@ -45,13 +61,32 @@ app.post('/ussd', (req, res) => {
                 else if (bmi < 30) category = 'Overweight';
                 else category = 'Obese';
 
+                // Save data to database
+                (async () => {
+                    try {
+                        await pool.query(
+                            `INSERT INTO sessions (session_id, phone_number)
+                             VALUES ($1, $2) ON CONFLICT (session_id) DO NOTHING`,
+                            [sessionId, phoneNumber]
+                        );
+
+                        await pool.query(
+                            `INSERT INTO bmi_data (session_id, age, weight, height, bmi)
+                             VALUES ($1, $2, $3, $4, $5)`,
+                            [sessionId, age, weight, height_cm, bmi]
+                        );
+                    } catch (err) {
+                        console.error('DB Error:', err);
+                    }
+                })();
+
                 response = `CON Your BMI is ${bmiFormatted} (${category}).
 Do you want health tips?
 1. Yes
 2. No`;
             }
-        } else if (inputs.length === 4) {
-            if (inputs[3] === '1') {
+        } else if (inputs.length === 5) {
+            if (inputs[4] === '1') {
                 response = 'END Tip: Eat balanced meals and stay active daily!';
             } else {
                 response = 'END Thank you for using our BMI service!';
@@ -78,8 +113,17 @@ Do you want health tips?
                 response = `CON Andika ibiro byawe (KG):
 0. Subira inyuma`;
             } else {
+                response = `CON Andika imyaka yawe:
+0. Subira inyuma`;
+            }
+        } else if (inputs.length === 4) {
+            if (inputs[3] === '0') {
+                response = `CON Andika uburebure bwawe (CM):
+0. Subira inyuma`;
+            } else {
                 const weight = parseFloat(inputs[1]);
                 const height_cm = parseFloat(inputs[2]);
+                const age = parseInt(inputs[3]);
                 const height_m = height_cm / 100;
                 const bmi = weight / (height_m * height_m);
                 const bmiFormatted = bmi.toFixed(1);
@@ -90,13 +134,32 @@ Do you want health tips?
                 else if (bmi < 30) category = 'Ibiro byinshi';
                 else category = 'Ufite umubyibuho ukabije';
 
+                // Save data to database
+                (async () => {
+                    try {
+                        await pool.query(
+                            `INSERT INTO sessions (session_id, phone_number)
+                             VALUES ($1, $2) ON CONFLICT (session_id) DO NOTHING`,
+                            [sessionId, phoneNumber]
+                        );
+
+                        await pool.query(
+                            `INSERT INTO bmi_data (session_id, age, weight, height, bmi)
+                             VALUES ($1, $2, $3, $4, $5)`,
+                            [sessionId, age, weight, height_cm, bmi]
+                        );
+                    } catch (err) {
+                        console.error('DB Error:', err);
+                    }
+                })();
+
                 response = `CON BMI yawe ni ${bmiFormatted} (${category}).
 Wifuza inama z’ubuzima?
 1. Yego
 2. Oya`;
             }
-        } else if (inputs.length === 4) {
-            if (inputs[3] === '1') {
+        } else if (inputs.length === 5) {
+            if (inputs[4] === '1') {
                 response = 'END Inama: Fata indyo yuzuye kandi ukore siporo buri munsi!';
             } else {
                 response = 'END Murakoze gukoresha serivisi yacu ya BMI.';
@@ -108,8 +171,8 @@ Wifuza inama z’ubuzima?
     res.send(response);
 });
 
-// Server
+// Start server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log(`USSD BMI app running on port ${PORT}`);
+    console.log(`✅ USSD BMI app running on port ${PORT}`);
 });
