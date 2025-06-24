@@ -38,8 +38,8 @@ app.post('/ussd', async (req, res) => {
 
         if (text === '') {
             response = `CON Please choose language / Hitamo ururimi
-                 1. English
-                 2. Kinyarwanda`;
+1. English
+2. Kinyarwanda`;
         }
 
         // -------------------- English Flow --------------------
