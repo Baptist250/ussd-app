@@ -13,17 +13,11 @@ app.post('/ussd', (req, res) => {
     const { sessionId, serviceCode, phoneNumber, text } = req.body;
     const inputs = text.split('*');
     let response = '';
-
-    // Step 1: Language selection
     if (text === '') {
         response = `CON Please choose language / Hitamo ururimi
 1. English
 2. Kinyarwanda`;
     }
-
-    // -------------------
-    // English Flow
-    // -------------------
     else if (inputs[0] === '1') {
         if (inputs.length === 1) {
             response = `CON Enter your weight in KG:
@@ -36,7 +30,7 @@ app.post('/ussd', (req, res) => {
             } else {
                 const weight = parseFloat(inputs[1]);
                 if (isNaN(weight) || weight <= 0 || weight > 300) {
-                    response = `END ❌ Invalid weight. Please enter a number between 1 and 300 KG.`;
+                    response = `END Invalid weight. Please enter a number between 1 and 300 KG.`;
                 } else {
                     response = `CON Enter your height in CM:
 0. Go back`;
@@ -49,7 +43,7 @@ app.post('/ussd', (req, res) => {
             } else {
                 const height = parseFloat(inputs[2]);
                 if (isNaN(height) || height <= 0 || height > 3000) {
-                    response = `END ❌ Invalid height. Please enter a number between 1 and 3000 CM.`;
+                    response = `END Invalid height. Please enter a number between 1 and 3000 CM.`;
                 } else {
                     response = `CON Enter your age:
 0. Go back`;
@@ -65,7 +59,7 @@ app.post('/ussd', (req, res) => {
                 const age = parseInt(inputs[3]);
 
                 if (isNaN(age) || age <= 0 || age > 1500) {
-                    response = `END ❌ Invalid age. Please enter a number between 1 and 1500.`;
+                    response = `END Invalid age. Please enter a number between 1 and 1500.`;
                 } else {
                     const height_m = height_cm / 100;
                     const bmi = weight / (height_m * height_m);
@@ -108,9 +102,6 @@ Do you want health tips?
         }
     }
 
-    // -------------------
-    // Kinyarwanda Flow
-    // -------------------
     else if (inputs[0] === '2') {
         if (inputs.length === 1) {
             response = `CON Andika ibiro byawe (KG):
@@ -123,7 +114,7 @@ Do you want health tips?
             } else {
                 const weight = parseFloat(inputs[1]);
                 if (isNaN(weight) || weight <= 0 || weight > 300) {
-                    response = `END ❌ Ibiro si byo. Injiza hagati ya 1 na 300 KG.`;
+                    response = `END Ibiro si byo. Injiza hagati ya 1 na 300 KG.`;
                 } else {
                     response = `CON Andika uburebure bwawe (CM):
 0. Subira inyuma`;
@@ -136,7 +127,7 @@ Do you want health tips?
             } else {
                 const height = parseFloat(inputs[2]);
                 if (isNaN(height) || height <= 0 || height > 3000) {
-                    response = `END ❌ Uburebure si bwo. Injiza hagati ya 1 na 3000 CM.`;
+                    response = `END Uburebure si bwo. Injiza hagati ya 1 na 3000 CM.`;
                 } else {
                     response = `CON Andika imyaka yawe:
 0. Subira inyuma`;
@@ -152,7 +143,7 @@ Do you want health tips?
                 const age = parseInt(inputs[3]);
 
                 if (isNaN(age) || age <= 0 || age > 1500) {
-                    response = `END ❌ Imyaka si yo. Injiza hagati ya 1 na 1500.`;
+                    response = `END Imyaka si yo. Injiza hagati ya 1 na 1500.`;
                 } else {
                     const height_m = height_cm / 100;
                     const bmi = weight / (height_m * height_m);
@@ -202,5 +193,5 @@ Wifuza inama z’ubuzima?
 // Start server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log(`✅ USSD BMI app running on port ${PORT}`);
+    console.log(`USSD BMI app running on port ${PORT}`);
 });
