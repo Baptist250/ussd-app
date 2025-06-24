@@ -9,7 +9,6 @@ const pool = new Pool({
     connectionString: 'postgresql://bmi_owner:npg_Ib0gpieRF5Vv@ep-cool-moon-a8317le8-pooler.eastus2.azure.neon.tech/bmi?sslmode=require',
 });
 
-// Helper to insert into DB without delaying response
 const saveBMIData = async (sessionId, phoneNumber, age, weight, height, bmi) => {
     try {
         await pool.query(
@@ -32,155 +31,148 @@ app.post('/ussd', async (req, res) => {
     res.set('Content-Type', 'text/plain');
 
     try {
-        const { sessionId, serviceCode, phoneNumber, text } = req.body;
+        const { sessionId, phoneNumber, text } = req.body;
         const inputs = text.split('*');
         let response = '';
 
-        if (text === '') {
-            response = `CON Please choose language / Hitamo ururimi
+        // Reset or first time
+        if (text === '' || inputs.length === 0) {
+            return res.send(`CON Please choose language / Hitamo ururimi
 1. English
-2. Kinyarwanda`;
+2. Kinyarwanda`);
         }
 
-        // -------------------- English Flow --------------------
-        else if (inputs[0] === '1') {
-            if (inputs.length === 1) {
-                response = `CON Enter your weight in KG:
+        // If user pressed 0, remove last step and go back
+        const cleanInputs = [...inputs];
+        while (cleanInputs.includes('0')) {
+            const index = cleanInputs.lastIndexOf('0');
+            cleanInputs.splice(index, 1);
+        }
+
+        const lang = cleanInputs[0];
+
+        if (lang === '1') {
+            // English Flow
+            switch (cleanInputs.length) {
+                case 1:
+                    response = `CON Enter your weight in KG:
 0. Go back`;
-            } else if (inputs.length === 2) {
-                if (inputs[1] === '0') {
-                    response = `CON Please choose language / Hitamo ururimi
-1. English
-2. Kinyarwanda`;
-                } else {
-                    const weight = parseFloat(inputs[1]);
-                    if (isNaN(weight) || weight <= 0 || weight > 300) {
+                    break;
+                case 2:
+                    const weight1 = parseFloat(cleanInputs[1]);
+                    if (isNaN(weight1) || weight1 <= 0 || weight1 > 300) {
                         response = `END Invalid weight. Please enter a number between 1 and 300 KG.`;
                     } else {
                         response = `CON Enter your height in CM:
 0. Go back`;
                     }
-                }
-            } else if (inputs.length === 3) {
-                if (inputs[2] === '0') {
-                    response = `CON Enter your weight in KG:
-                      0. Go back`;
-                } else {
-                    const height = parseFloat(inputs[2]);
-                    if (isNaN(height) || height <= 0 || height > 3000) {
+                    break;
+                case 3:
+                    const height1 = parseFloat(cleanInputs[2]);
+                    if (isNaN(height1) || height1 <= 0 || height1 > 3000) {
                         response = `END Invalid height. Please enter a number between 1 and 3000 CM.`;
                     } else {
                         response = `CON Enter your age:
-                           0. Go back`;
+0. Go back`;
                     }
-                }
-            } else if (inputs.length === 4) {
-                if (inputs[3] === '0') {
-                    response = `CON Enter your height in CM:
-                      0. Go back`;
-                } else {
-                    const weight = parseFloat(inputs[1]);
-                    const height_cm = parseFloat(inputs[2]);
-                    const age = parseInt(inputs[3]);
+                    break;
+                case 4:
+                    const weight2 = parseFloat(cleanInputs[1]);
+                    const height_cm1 = parseFloat(cleanInputs[2]);
+                    const age1 = parseInt(cleanInputs[3]);
 
-                    if (isNaN(age) || age <= 0 || age > 1500) {
+                    if (isNaN(age1) || age1 <= 0 || age1 > 1500) {
                         response = `END Invalid age. Please enter a number between 1 and 1500.`;
                     } else {
-                        const height_m = height_cm / 100;
-                        const bmi = weight / (height_m * height_m);
-                        const bmiFormatted = bmi.toFixed(1);
+                        const height_m1 = height_cm1 / 100;
+                        const bmi1 = weight2 / (height_m1 * height_m1);
+                        const bmiFormatted1 = bmi1.toFixed(1);
 
                         let category = '';
-                        if (bmi < 18.5) category = 'Underweight';
-                        else if (bmi < 25) category = 'Normal weight';
-                        else if (bmi < 30) category = 'Overweight';
+                        if (bmi1 < 18.5) category = 'Underweight';
+                        else if (bmi1 < 25) category = 'Normal weight';
+                        else if (bmi1 < 30) category = 'Overweight';
                         else category = 'Obese';
 
-                        // Call background DB insert (non-blocking)
-                        saveBMIData(sessionId, phoneNumber, age, weight, height_cm, bmi);
+                        saveBMIData(sessionId, phoneNumber, age1, weight2, height_cm1, bmi1);
 
-                        response = `CON Your BMI is ${bmiFormatted} (${category}).
-                           Do you want health tips?
-                           1. Yes
-                           2. No`;
+                        response = `CON Your BMI is ${bmiFormatted1} (${category}).
+Do you want health tips?
+1. Yes
+2. No`;
                     }
-                }
-            } else if (inputs.length === 5) {
-                response = inputs[4] === '1'
-                    ? 'END Tip: Eat balanced meals and stay active daily!'
-                    : 'END Thank you for using our BMI service!';
+                    break;
+                case 5:
+                    response = cleanInputs[4] === '1'
+                        ? 'END Tip: Eat balanced meals and stay active daily!'
+                        : 'END Thank you for using our BMI service!';
+                    break;
+                default:
+                    response = 'END Invalid input. Start again.';
             }
-        }
-
-        else if (inputs[0] === '2') {
-            if (inputs.length === 1) {
-                response = `CON Andika ibiro byawe (KG):
-                   0. Subira inyuma`;
-             } else if (inputs.length === 2) {
-                if (inputs[1] === '0') {
-                    response = `CON Please choose language / Hitamo ururimi
-                     1. English
-                     2. Kinyarwanda`;
-                } else {
-                    const weight = parseFloat(inputs[1]);
-                    if (isNaN(weight) || weight <= 0 || weight > 300) {
+        } else if (lang === '2') {
+            // Kinyarwanda Flow
+            switch (cleanInputs.length) {
+                case 1:
+                    response = `CON Andika ibiro byawe (KG):
+0. Subira inyuma`;
+                    break;
+                case 2:
+                    const weight3 = parseFloat(cleanInputs[1]);
+                    if (isNaN(weight3) || weight3 <= 0 || weight3 > 300) {
                         response = `END Ibiro si byo. Injiza hagati ya 1 na 300 KG.`;
                     } else {
                         response = `CON Andika uburebure bwawe (CM):
-                           0. Subira inyuma`;
+0. Subira inyuma`;
                     }
-                }
-            } else if (inputs.length === 3) {
-                if (inputs[2] === '0') {
-                    response = `CON Andika ibiro byawe (KG):
-                      0. Subira inyuma`;
-                } else {
-                    const height = parseFloat(inputs[2]);
-                    if (isNaN(height) || height <= 0 || height > 3000) {
+                    break;
+                case 3:
+                    const height2 = parseFloat(cleanInputs[2]);
+                    if (isNaN(height2) || height2 <= 0 || height2 > 3000) {
                         response = `END Uburebure si bwo. Injiza hagati ya 1 na 3000 CM.`;
                     } else {
                         response = `CON Andika imyaka yawe:
-                           0. Subira inyuma`;
+0. Subira inyuma`;
                     }
-                }
-            } else if (inputs.length === 4) {
-                if (inputs[3] === '0') {
-                    response = `CON Andika uburebure bwawe (CM):
-                      0. Subira inyuma`;
-                } else {
-                    const weight = parseFloat(inputs[1]);
-                    const height_cm = parseFloat(inputs[2]);
-                    const age = parseInt(inputs[3]);
+                    break;
+                case 4:
+                    const weight4 = parseFloat(cleanInputs[1]);
+                    const height_cm2 = parseFloat(cleanInputs[2]);
+                    const age2 = parseInt(cleanInputs[3]);
 
-                    if (isNaN(age) || age <= 0 || age > 1500) {
+                    if (isNaN(age2) || age2 <= 0 || age2 > 1500) {
                         response = `END Imyaka si yo. Injiza hagati ya 1 na 1500.`;
                     } else {
-                        const height_m = height_cm / 100;
-                        const bmi = weight / (height_m * height_m);
-                        const bmiFormatted = bmi.toFixed(1);
+                        const height_m2 = height_cm2 / 100;
+                        const bmi2 = weight4 / (height_m2 * height_m2);
+                        const bmiFormatted2 = bmi2.toFixed(1);
 
                         let category = '';
-                        if (bmi < 18.5) category = 'Ufite ibiro bikeya';
-                        else if (bmi < 25) category = 'Ibiro bisanzwe';
-                        else if (bmi < 30) category = 'Ibiro byinshi';
+                        if (bmi2 < 18.5) category = 'Ufite ibiro bikeya';
+                        else if (bmi2 < 25) category = 'Ibiro bisanzwe';
+                        else if (bmi2 < 30) category = 'Ibiro byinshi';
                         else category = 'Ufite umubyibuho ukabije';
 
-                        // DB save in background
-                        saveBMIData(sessionId, phoneNumber, age, weight, height_cm, bmi);
+                        saveBMIData(sessionId, phoneNumber, age2, weight4, height_cm2, bmi2);
 
-                        response = `CON BMI yawe ni ${bmiFormatted} (${category}).
-                        Wifuza inama z’ubuzima?
-                        1. Yego
-                        2. Oya`;
-
-
+                        response = `CON BMI yawe ni ${bmiFormatted2} (${category}).
+Wifuza inama z’ubuzima?
+1. Yego
+2. Oya`;
                     }
-                }
-            } else if (inputs.length === 5) {
-                response = inputs[4] === '1'
-                    ? 'END Inama: Fata indyo yuzuye kandi ukore siporo buri munsi!'
-                    : 'END Murakoze gukoresha serivisi yacu ya BMI.';
+                    break;
+                case 5:
+                    response = cleanInputs[4] === '1'
+                        ? 'END Inama: Fata indyo yuzuye kandi ukore siporo buri munsi!'
+                        : 'END Murakoze gukoresha serivisi yacu ya BMI.';
+                    break;
+                default:
+                    response = 'END Ibisubizo si byo. Tangira bundi bushya.';
             }
+        } else {
+            response = `CON Please choose language / Hitamo ururimi
+1. English
+2. Kinyarwanda`;
         }
 
         res.send(response);
