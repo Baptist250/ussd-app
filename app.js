@@ -4,7 +4,7 @@ const app = express();
 
 app.use(express.urlencoded({ extended: true }));
 
-// PostgreSQL connection setup using provided URI
+// PostgreSQL connection setup
 const pool = new Pool({
     connectionString: 'postgresql://bmi_owner:npg_Ib0gpieRF5Vv@ep-cool-moon-a8317le8-pooler.eastus2.azure.neon.tech/bmi?sslmode=require',
 });
@@ -51,39 +51,43 @@ app.post('/ussd', (req, res) => {
                 const weight = parseFloat(inputs[1]);
                 const height_cm = parseFloat(inputs[2]);
                 const age = parseInt(inputs[3]);
-                const height_m = height_cm / 100;
-                const bmi = weight / (height_m * height_m);
-                const bmiFormatted = bmi.toFixed(1);
 
-                let category = '';
-                if (bmi < 18.5) category = 'Underweight';
-                else if (bmi < 25) category = 'Normal weight';
-                else if (bmi < 30) category = 'Overweight';
-                else category = 'Obese';
+                if (weight <= 0 || height_cm <= 0 || age <= 0) {
+                    response = `END Invalid input! Weight, height, and age must be positive numbers.`;
+                } else {
+                    const height_m = height_cm / 100;
+                    const bmi = weight / (height_m * height_m);
+                    const bmiFormatted = bmi.toFixed(1);
 
-                // Save data to database
-                (async () => {
-                    try {
-                        await pool.query(
-                            `INSERT INTO sessions (session_id, phone_number)
-                             VALUES ($1, $2) ON CONFLICT (session_id) DO NOTHING`,
-                            [sessionId, phoneNumber]
-                        );
+                    let category = '';
+                    if (bmi < 18.5) category = 'Underweight';
+                    else if (bmi < 25) category = 'Normal weight';
+                    else if (bmi < 30) category = 'Overweight';
+                    else category = 'Obese';
 
-                        await pool.query(
-                            `INSERT INTO bmi_data (session_id, age, weight, height, bmi)
-                             VALUES ($1, $2, $3, $4, $5)`,
-                            [sessionId, age, weight, height_cm, bmi]
-                        );
-                    } catch (err) {
-                        console.error('DB Error:', err);
-                    }
-                })();
+                    (async () => {
+                        try {
+                            await pool.query(
+                                `INSERT INTO sessions (session_id, phone_number)
+                                 VALUES ($1, $2) ON CONFLICT (session_id) DO NOTHING`,
+                                [sessionId, phoneNumber]
+                            );
 
-                response = `CON Your BMI is ${bmiFormatted} (${category}).
+                            await pool.query(
+                                `INSERT INTO bmi_data (session_id, age, weight, height, bmi)
+                                 VALUES ($1, $2, $3, $4, $5)`,
+                                [sessionId, age, weight, height_cm, bmi]
+                            );
+                        } catch (err) {
+                            console.error('DB Error:', err);
+                        }
+                    })();
+
+                    response = `CON Your BMI is ${bmiFormatted} (${category}).
 Do you want health tips?
 1. Yes
 2. No`;
+                }
             }
         } else if (inputs.length === 5) {
             if (inputs[4] === '1') {
@@ -124,39 +128,43 @@ Do you want health tips?
                 const weight = parseFloat(inputs[1]);
                 const height_cm = parseFloat(inputs[2]);
                 const age = parseInt(inputs[3]);
-                const height_m = height_cm / 100;
-                const bmi = weight / (height_m * height_m);
-                const bmiFormatted = bmi.toFixed(1);
 
-                let category = '';
-                if (bmi < 18.5) category = 'Ufite ibiro bikeya';
-                else if (bmi < 25) category = 'Ibiro bisanzwe';
-                else if (bmi < 30) category = 'Ibiro byinshi';
-                else category = 'Ufite umubyibuho ukabije';
+                if (weight <= 0 || height_cm <= 0 || age <= 0) {
+                    response = `END Ibyinjiye si byo! Ibiro, uburebure n'imyaka bigomba kuba imibare itari munsi ya 0.`;
+                } else {
+                    const height_m = height_cm / 100;
+                    const bmi = weight / (height_m * height_m);
+                    const bmiFormatted = bmi.toFixed(1);
 
-                // Save data to database
-                (async () => {
-                    try {
-                        await pool.query(
-                            `INSERT INTO sessions (session_id, phone_number)
-                             VALUES ($1, $2) ON CONFLICT (session_id) DO NOTHING`,
-                            [sessionId, phoneNumber]
-                        );
+                    let category = '';
+                    if (bmi < 18.5) category = 'Ufite ibiro bikeya';
+                    else if (bmi < 25) category = 'Ibiro bisanzwe';
+                    else if (bmi < 30) category = 'Ibiro byinshi';
+                    else category = 'Ufite umubyibuho ukabije';
 
-                        await pool.query(
-                            `INSERT INTO bmi_data (session_id, age, weight, height, bmi)
-                             VALUES ($1, $2, $3, $4, $5)`,
-                            [sessionId, age, weight, height_cm, bmi]
-                        );
-                    } catch (err) {
-                        console.error('DB Error:', err);
-                    }
-                })();
+                    (async () => {
+                        try {
+                            await pool.query(
+                                `INSERT INTO sessions (session_id, phone_number)
+                                 VALUES ($1, $2) ON CONFLICT (session_id) DO NOTHING`,
+                                [sessionId, phoneNumber]
+                            );
 
-                response = `CON BMI yawe ni ${bmiFormatted} (${category}).
+                            await pool.query(
+                                `INSERT INTO bmi_data (session_id, age, weight, height, bmi)
+                                 VALUES ($1, $2, $3, $4, $5)`,
+                                [sessionId, age, weight, height_cm, bmi]
+                            );
+                        } catch (err) {
+                            console.error('DB Error:', err);
+                        }
+                    })();
+
+                    response = `CON BMI yawe ni ${bmiFormatted} (${category}).
 Wifuza inama z’ubuzima?
 1. Yego
 2. Oya`;
+                }
             }
         } else if (inputs.length === 5) {
             if (inputs[4] === '1') {
